@@ -1,43 +1,53 @@
 const  express = require("express");
 const Router = express.Router();
 const mongoose = require('mongoose');
-const userManager = require('../models/user_info')
-
+const userManager = require('../models/user')
+const userInfo = require('../models/user_info');
+const auth = require('../middleware/auth')
 // list usẻ function ----------------------------------------------------------------
-Router.get('/',(req,res)=>{{
-    userManager.find()
-        .select('name dateofbirth mobile_phone gender create_at _id')
-        .exec()
-        .then(docs=>{
-            const response = {
-                count: docs.length,
-                user_info: docs.map(doc=>{
-                    return{
-                        name:doc.name,
-                        dateofbirth:doc.dateofbirth,
-                        mobile_phone:doc.mobile_phone,
-                        gender:doc.gender,
-                        create_at:doc.create_at,
-                        _id:doc._id,
+Router.get('/list',auth,async (req,res,)=>{{
+     await userManager.find()
+    .select('username email password _id')
+    .exec()
+    .then(docs => {
+        const respond = {
+            count: docs.length,
+            users: docs.map(doc => {
+                return {
+                    email: doc.email,
+                    password: doc.password,
+                    username: doc.username,
+                    _id: doc._id,
+                    request: {
+                        type: 'GET',
+                        url: 'http://localhost:4000/userManager/' + doc._id
                     }
-                })
-            }
-            res.status(200).json(response);
-        })
-        .catch(err=>{
-            res.status(500).json({error:err})
-        })
+                }
+            })
+        }
+        res.status(200).json(respond)
+    })
+    .catch(err => {
+        console.log(err);
+        res.status(500).json({
+            error: err
+        });
+    });
 }})
 
+
+
 // get user ID  ----------------------------------------------------------------
-Router.get('/:id',(req, res)=>{
-    userManager.findById(req.params.id) // param la lay id o tren ||  findById : la lay id
+Router.get('/userInfo',auth,(req, res)=>{
+    const id = req.query.user_id;
+    userInfo.findOne({user:id}) //  findById : la lay id
         .select('name dateofbirth mobile_phone gender create_at _id')
         .exec()
         .then(docs=>{
             if(docs){
-                
-                res.status(200).json({userInfo:docs,message:'success'});
+                res.status(200).json({message:'success',userInfo:docs});
+            } else {
+                res.status(404).json({message:"err"})
             }
             
         })
@@ -46,13 +56,26 @@ Router.get('/:id',(req, res)=>{
         })
 })
 
+//----------------------------------------------------------------------
+
 // delete user function ----------------------------------------------------------------
-Router.delete('/:userinfoId',(req, res)=>{
-    userManager.findByIdAndRemove(req.params.userinfoId,function(err, user){
-        if(err) return res.status(500).json({error:err})
-        else res.status(200).json({message:'success'})
-    })
+Router.delete('/delete',auth,(req, res)=>{
+    try {
+        const id = req.query.user_id;
+        userManager.findByIdAndRemove(id,function(err, user){
+            if(err) return res.status(500).json({error:err})
+            else{
+                userInfo.findOneAndRemove({user:id},function(errInfo,userinfo){
+                    if(errInfo)  throw errInfo
+                    else res.status(200).json({message:'Deleted successfully'})
+                })
+            }
+        })
+    }catch(err){
+        res.status(500).json({message:err})
+    }
 })
+
 module.exports =Router;
 
 

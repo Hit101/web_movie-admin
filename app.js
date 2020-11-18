@@ -7,7 +7,7 @@ const mongoose=require('mongoose');
 const cookieParser =require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 
-//
+
 app.set('view engine', 'ejs');
 app.set('views', __dirname + "/api/views");
 
@@ -18,6 +18,7 @@ if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config()
   }
 
+  //mongooose
 mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true })
 //connect to MongoDB
 

@@ -24,13 +24,8 @@ router.get('/all',async(req,res,next)=>{
                 }
             })
         }
-        //if(docs.length>=0){
+       
             res.status(200).json(respond)
-        // }else{
-        //     res.status(400).json({
-        //         message:'No entries found'
-        //     });
-        // }
     })
     .catch(err=>{
         console.log(err);
